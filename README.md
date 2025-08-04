@@ -8,7 +8,8 @@
 ## 📌 프로젝트 개요
 
 - **프로젝트명:** DADADA_SPRING_VER  
-- **진행 기간:** 202X.XX ~ 202X.XX  
+- **프로젝트 기관:** kt ds university 25기
+- **진행 기간:** 2025.04.18 ~ 2025.04.29
 - **사용 기술:** Java, Spring Framework, JSP, MyBatis, HTML/CSS/JS, MySQL  
 - **주요 역할:**  
   - 💳 결제 기능 구현  
