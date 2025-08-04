@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ktdsuniversity.proj.dadada.product.dao.ProductDao">
+
+<!-- 상품 상세 조회용 ResultMap -->
+<resultMap id="productResultMap" type="com.ktdsuniversity.proj.dadada.product.vo.ProductVO">
+    <id property="prdId" column="PRD_ID"/>
+    <result property="prdNm" column="PRD_NM"/>
+    <result property="prdDesc" column="PRD_DESC"/>
+    <result property="basePrice" column="BASE_PRICE"/>
+    <result property="prdDscntPrc" column="PRD_DSCNT_PRC"/>
+    <result property="prdImg" column="PRD_IMG"/>
+    <result property="prdQty"    column="PRD_QTY"/>
+    <association property="supplierVO" javaType="com.ktdsuniversity.proj.dadada.supplier.vo.SupplierVO">
+        <id property="splrId" column="SPLR_ID"/>
+        <result property="splrNm" column="SPLR_NM"/>
+    </association>
+    
+</resultMap>
+
+<!-- 상품 등록 -->
+<insert id="insertProduct" parameterType="com.ktdsuniversity.proj.dadada.product.vo.ProductVO">
+    INSERT INTO PRD (
+        PRD_ID,
+        SPLR_ID,
+        DSCNT_PLCY_ID,
+        PRD_CTGRY_ID,
+        PRD_NM,
+        PRD_DESC,
+        BASE_PRICE,
+        PRD_DSCNT_PRC,
+        PRD_RVW_CNT,
+        PRD_QTY,
+        PRD_IMG,
+        PRD_SMPL_DESC
+    ) VALUES (
+        PRODUCT_SEQ.NEXTVAL,
+        #{splrId},
+        #{dscntPlcyId},
+        #{prdCtgryId},
+        #{prdNm},
+        #{prdDesc},
+        #{basePrice},
+        #{prdDscntPrc},
+        #{prdRvwCnt},
+        #{prdQty},
+        #{prdImg},
+        #{prdSmplDesc}
+    )
+</insert>
+
+<!-- 상품 전체 목록 조회 (페이징X) -->
+<select id="selectAllProducts" resultType="com.ktdsuniversity.proj.dadada.product.vo.ProductVO">
+    SELECT
+        PRD_ID,
+        PRD_NM,
+        BASE_PRICE,
+        PRD_RVW_CNT,
+        PRD_IMG
+    FROM PRD
+</select>
+
+<!-- 상품 ID로 상세 조회 (공급업체 조인) -->
+<select id="selectProductById" parameterType="int" resultMap="productResultMap">
+    SELECT
+        P.PRD_ID,
+        P.PRD_NM,
+        P.PRD_DESC,
+        P.BASE_PRICE,
+        P.PRD_DSCNT_PRC,
+        P.PRD_IMG,
+        P.SPLR_ID,
+        S.SPLR_NM,
+        P.PRD_QTY
+    FROM PRD P
+    JOIN SPLR S ON P.SPLR_ID = S.SPLR_ID
+    WHERE P.PRD_ID = #{prdId}
+</select>
+
+<!--상품 검색  -->
+<select id="selectPagedProductList" resultType="com.ktdsuniversity.proj.dadada.product.vo.ProductVO">
+	SELECT 
+		PRD_ID, 
+		PRD_NM, 
+		BASE_PRICE, 
+		PRD_RVW_CNT, 
+		PRD_IMG
+	FROM (
+		SELECT P.*, ROWNUM RNUM
+		FROM (
+			SELECT 
+				PRD_ID, 
+				PRD_NM, 
+				BASE_PRICE, 
+				PRD_RVW_CNT, 
+				PRD_IMG
+			FROM PRD
+			<where>
+				<if test="searchKeyword != null and searchKeyword != ''">
+					AND REPLACE(PRD_NM, ' ', '') LIKE '%' || REPLACE(#{searchKeyword}, ' ', '') || '%'
+				</if>
+			</where>
+			ORDER BY PRD_ID DESC
+		) P
+		WHERE ROWNUM <![CDATA[<=]]> #{pageNo} * #{listSize}
+	)
+	WHERE RNUM >= (#{pageNo} - 1) * #{listSize} + 1
+</select>
+
+<select id="getProductTotalCount" resultType="_int">
+    SELECT COUNT(*)
+    FROM PRD
+    <where>
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND REPLACE(PRD_NM, ' ', '') LIKE '%' || REPLACE(#{searchKeyword}, ' ', '') || '%'
+        </if>
+    </where>
+</select>
+
+<delete id="deleteProductById" parameterType="int">
+    DELETE FROM PRD
+    WHERE PRD_ID = #{prdId}
+</delete>
+
+<update id="decreaseProductQty"
+        parameterType="com.ktdsuniversity.proj.dadada.product.vo.ProductQtyUpdateVO">
+  UPDATE PRD
+     SET PRD_QTY = PRD_QTY - #{qty}
+   WHERE PRD_ID  = #{prdId}
+</update>
+
+  <select id="getProductPrice"
+          parameterType="int"
+          resultType="double">
+    SELECT BASE_PRICE
+      FROM PRD
+     WHERE PRD_ID = #{prdId}
+  </select>
+
+</mapper>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ktdsuniversity.proj.dadada.admin.dao.AdminDAO">
+
+    <!-- 주문 목록 조회 -->
+    <select id="selectAllOrders" resultType="com.ktdsuniversity.proj.dadada.admin.vo.AdminVO">
+        SELECT
+            ORD_ID,
+            MBR_ID,
+            PRD_ID,
+            PCKG_ID,
+            EVNT_RM_ID,
+            ORD_CNT,
+            PRD_PRC,
+            DSCNT_RT,
+            PRD_DSCNT_PRC,
+            PRD_PRC_FINAL,
+            TO_CHAR(ORD_DT, 'YYYY-MM-DD HH24:MI:SS') AS ORD_DT, 
+            ORD_DVSN,
+            DLV_STAT,
+            CRT_PCKG_YN
+        FROM ORD
+        ORDER BY ORD_DT DESC
+    </select>
+
+</mapper>

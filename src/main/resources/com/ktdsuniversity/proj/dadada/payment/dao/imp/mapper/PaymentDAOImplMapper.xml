@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ktdsuniversity.proj.dadada.payment.dao.impl.PaymentDAOImpl">
+
+  <insert id="insertPayment" parameterType="com.ktdsuniversity.proj.dadada.payment.vo.PaymentVO">
+    INSERT INTO PMT (
+      PMT_ID,
+      ORD_ID,
+      MTD_MTHD,
+      PMT_STAT,
+      AMT,
+      PMT_DT,
+      TX_ID,
+      RFND_DT
+    ) VALUES (
+      #{impUid},
+      #{merchantUid},
+      #{payMethod},
+      #{status},
+      #{paidAmount},
+      SYSDATE,
+      #{pgTid},
+      ''
+    )
+  </insert>
+  
+  <select id="selectPaymentByOrderId" parameterType="int" resultType="com.ktdsuniversity.proj.dadada.payment.vo.PaymentVO">
+  SELECT
+    PMT_ID    AS impUid,
+    ORD_ID    AS ordId,
+    MTD_MTHD  AS payMethod,
+    PMT_STAT  AS status,
+    AMT       AS paidAmount,
+    TX_ID     AS pgTid
+  FROM PMT
+  WHERE ORD_ID = #{ordId}
+</select>
+
+
+  <select id="selectPaymentByImpUid"
+          parameterType="String"
+          resultType="com.ktdsuniversity.proj.dadada.payment.vo.PaymentVO">
+    SELECT
+      PMT_ID    AS impUid,
+      ORD_ID    AS merchantUid,
+      MTD_MTHD  AS payMethod,
+      PMT_STAT  AS status,
+      AMT       AS paidAmount,
+      TX_ID     AS pgTid
+    FROM TEAM_B.PMT
+    WHERE PMT_ID = #{impUid}
+  </select>
+
+  <update id="updatePaymentStatusToRefund" parameterType="String">
+    UPDATE TEAM_B.PMT
+      SET PMT_STAT = 'refund',
+          RFND_DT  = SYSDATE
+    WHERE PMT_ID = #{impUid}
+  </update>
+  
+  <select id="selectPaymentByMerchantUid"
+          parameterType="String"
+          resultType="com.ktdsuniversity.proj.dadada.payment.vo.PaymentVO">
+    SELECT
+      PMT_ID    AS impUid,
+      ORD_ID    AS merchantUid,
+      MTD_MTHD  AS payMethod,
+      PMT_STAT  AS status,
+      AMT       AS paidAmount,
+      TX_ID     AS pgTid
+    FROM TEAM_B.PMT
+    WHERE ORD_ID = #{merchantUid}
+  </select>
+
+</mapper>

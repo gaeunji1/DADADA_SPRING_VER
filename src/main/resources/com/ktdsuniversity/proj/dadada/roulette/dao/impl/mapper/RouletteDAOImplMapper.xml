@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ktdsuniversity.proj.dadada.roulette.dao.impl.RouletteDAOImpl">
+
+  <!-- RouletteBenefitVO 결과 매핑 -->
+  <resultMap id="RouletteBenefitResultMap" type="com.ktdsuniversity.proj.dadada.roulette.vo.RouletteBenefitVO" autoMapping="true">
+    <id column="BNFT_ID" property="benefitId" />
+    <result column="BNFT_NM" property="benefitName" />
+    <result column="BNFT_TYP" property="benefitType" />
+    <result column="BNFT_VAL" property="benefitValue" />
+    <result column="BNFT_PRB" property="benefitProbability" />
+  </resultMap>
+
+  <!-- RouletteSpinVO + benefit 객체 포함 결과 매핑 -->
+  <resultMap id="RouletteSpinResultMap" type="com.ktdsuniversity.proj.dadada.roulette.vo.RouletteSpinVO">
+    <id column="SPN_ID" property="spinId"/>
+    <result column="MBR_ID" property="memId"/>
+    <result column="BNFT_ID" property="benefitId"/>
+    <result column="SPN_DT" property="spinDatetime"/>
+    <result column="IS_CLMD_YN" property="isClaimed"/>
+    <result column="CPN_CD" property="couponCode"/>
+    
+    <!-- 직접 매핑 -->
+    <result column="BNFT_NM" property="benefitName"/>
+    <result column="BNFT_TYP" property="benefitType"/>
+    <result column="BNFT_VAL" property="benefitValue"/>
+
+    <!-- 복합 객체 매핑도 함께 -->
+    <association property="benefit" javaType="com.ktdsuniversity.proj.dadada.roulette.vo.RouletteBenefitVO">
+        <id column="BNFT_ID" property="benefitId"/>
+        <result column="BNFT_NM" property="benefitName"/>
+        <result column="BNFT_TYP" property="benefitType"/>
+        <result column="BNFT_VAL" property="benefitValue"/>
+        <result column="BNFT_PRB" property="benefitProbability"/>
+    </association>
+</resultMap>
+
+  <!-- 모든 혜택 조회 -->
+  <select id="selectAllBenefits" resultMap="RouletteBenefitResultMap">
+    SELECT BNFT_ID,
+           BNFT_NM,
+           BNFT_TYP,
+           BNFT_VAL,
+           BNFT_PRB
+      FROM RLT_BNFT
+  </select>
+
+  <!-- 특정 benefitId 조회 -->
+  <select id="selectBenefitById" parameterType="int" resultMap="RouletteBenefitResultMap">
+    SELECT BNFT_ID,
+           BNFT_NM,
+           BNFT_TYP,
+           BNFT_VAL,
+           BNFT_PRB
+      FROM RLT_BNFT
+     WHERE BNFT_ID = #{benefitId}
+  </select>
+
+  <!-- 룰렛 스핀 결과 등록 -->
+  <insert id="insertRouletteSpin" parameterType="com.ktdsuniversity.proj.dadada.roulette.vo.RouletteSpinVO">
+    <selectKey order="BEFORE" resultType="int" keyProperty="spinId">
+      SELECT seq_spn_id.NEXTVAL FROM DUAL
+    </selectKey>
+    INSERT INTO RLT_SPN (
+      SPN_ID,
+      MBR_ID,
+      BNFT_ID,
+      SPN_DT,
+      IS_CLMD_YN,
+      CPN_CD
+    ) VALUES (
+      #{spinId},
+      #{memId},
+      #{benefitId},
+      TO_DATE(#{spinDatetime}, 'YYYY-MM-DD HH24:MI:SS'),
+      #{isClaimed},
+      #{couponCode}
+    )
+  </insert>
+
+  <!-- 회원별 룰렛 스핀 결과 조회 (RouletteSpinVO + benefit 포함) -->
+  <select id="selectSpinsByMemberId" resultMap="RouletteSpinResultMap">
+    SELECT s.SPN_ID,
+           s.MBR_ID,
+           s.BNFT_ID,
+           s.SPN_DT,
+           s.IS_CLMD_YN,
+           s.CPN_CD,
+           b.BNFT_NM,
+           b.BNFT_TYP,
+           b.BNFT_VAL
+      FROM RLT_SPN s
+     INNER JOIN RLT_BNFT b ON s.BNFT_ID = b.BNFT_ID
+     WHERE s.MBR_ID = #{memId}
+     ORDER BY s.SPN_DT DESC
+  </select>
+
+</mapper>

@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ktdsuniversity.proj.dadada.mypage.dao.impl.MyPageDaoImpl">
+
+
+    <select id="getMyOrderDetails"
+            parameterType="int"
+            resultType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageOrderDetailVO">
+        SELECT
+          D.ORD_ID,
+          D.PRD_ID                       AS prdId,
+          P.PRD_NM                       AS prdNm,
+          P.PRD_IMG                      AS prdImg,
+
+          D.PCKG_ID                      AS pckgId,
+          PK.PCKG_NM                     AS pckgNm,
+          PK.PCKG_IMG                    AS pckgImg,
+
+          D.ORD_DETL_PRD_CNT             AS ordCnt,
+          D.ORD_DETL_PRD_PRC             AS prdPrc,
+          D.ORD_DETL_PRD_DSCNT_PRC       AS prdDscntPrc,
+          D.ORD_DETL_PRD_PRC_FINAL       AS prdPrcFinal,
+
+          TO_CHAR(O.ORD_DT,'YYYY-MM-DD') AS ordDt,
+          O.ORD_DVSN                     AS ordDvsn,
+
+          O.EVNT_RM_ID                   AS evntRmId,
+
+          PMT.MTD_MTHD                   AS mtdMthd,
+          PMT.PMT_STAT                   AS pmtStat,
+          PMT.AMT                        AS paidAmount,
+          TO_CHAR(PMT.PMT_DT,'YYYY-MM-DD') AS pmtDt,
+
+          SHP.SHP_NM                     AS shpNm,
+          SHP.SHP_PH_NO                  AS shpPhNo,
+          SHP.SHP_ADDR                   AS shpAddr,
+          SHP.SHP_REQ_CN                 AS shpReqCn,
+          SHP.SHP_CMPNY                  AS shpCmpny,
+          SHP.SHP_TRK_NUM                AS shpTrkNum,
+          SHP.SHP_STAT                   AS shpStat,
+          TO_CHAR(SHP.SHP_DT,'YYYY-MM-DD HH24:MI')     AS shpDt,
+          TO_CHAR(SHP.SHP_ARRV_DT,'YYYY-MM-DD HH24:MI') AS shpArrvDt
+
+          , CASE
+                WHEN (SELECT COUNT(*) 
+                        FROM PRD_RVW RVW
+                       WHERE RVW.PRD_ID = D.PRD_ID
+                         AND RVW.MBR_ID = O.MBR_ID
+                     ) > 0
+                THEN 1
+                ELSE 0
+                 END AS review_written
+
+        FROM ORD_DETL D
+        JOIN ORD           O   ON D.ORD_ID    = O.ORD_ID
+        LEFT JOIN PRD      P   ON D.PRD_ID    = P.PRD_ID
+        LEFT JOIN PRCHS_PCKG PK ON D.PCKG_ID   = PK.PCKG_ID
+        LEFT JOIN PMT      PMT ON O.ORD_ID    = PMT.ORD_ID
+        LEFT JOIN SHP      SHP ON O.ORD_ID    = SHP.ORD_ID
+
+        WHERE D.ORD_ID = #{ordId}
+        ORDER BY D.ORD_DETL_ID
+    </select>
+
+
+   <select id="getMyOrderList"
+        parameterType="int"
+        resultType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageOrderListVO">
+    SELECT 
+       O.ORD_ID
+     , TO_CHAR(PMT.PMT_DT, 'YYYY-MM-DD') AS PMT_DT
+     , O.ORD_CNT
+     , O.PRD_PRC_FINAL
+     , SHP.SHP_STAT
+     , SHP.SHP_DT
+     , SHP.SHP_ARRV_DT
+
+
+      ,  (
+          SELECT OD.PRD_ID
+            FROM ORD_DETL OD
+           WHERE OD.ORD_ID = O.ORD_ID
+           ORDER BY OD.ORD_DETL_ID
+           FETCH FIRST 1 ROW ONLY
+        ) AS sample_prd_id,
+
+        (
+          SELECT P.PRD_NM
+            FROM ORD_DETL OD
+            JOIN PRD P ON OD.PRD_ID = P.PRD_ID
+           WHERE OD.ORD_ID = O.ORD_ID
+           ORDER BY OD.ORD_DETL_ID
+           FETCH FIRST 1 ROW ONLY
+        ) AS sample_prd_nm,
+
+        (
+          SELECT P.PRD_IMG
+            FROM ORD_DETL OD
+            JOIN PRD P ON OD.PRD_ID = P.PRD_ID
+           WHERE OD.ORD_ID = O.ORD_ID
+           ORDER BY OD.ORD_DETL_ID
+           FETCH FIRST 1 ROW ONLY
+        ) AS sample_prd_img
+
+    FROM ORD O
+    LEFT JOIN PMT PMT ON O.ORD_ID = PMT.ORD_ID
+    LEFT JOIN SHP SHP ON O.ORD_ID = SHP.ORD_ID
+   WHERE O.MBR_ID = #{mbrId}
+   ORDER BY PMT.PMT_DT DESC
+</select>
+
+
+    <select id="selectMyOrderListByPaging"
+        parameterType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageOrderSearchVO"
+        resultType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageOrderListVO">
+    SELECT RNUM
+         , EVNT_RM_ID
+         , MBR_ID
+         , EVNT_RM_PTCPT_RNK
+         , ORD_ID
+         , ORD_CNT
+         , PRD_PRC_FINAL
+         , ORD_DT
+         , ORD_DVSN
+         , PCKG_ID
+         , PCKG_NM
+         , PCKG_IMG
+         , PMT_DT
+         , PRD_ID
+         , PRD_NM
+         , PRD_IMG
+         , SHP_CMPNY
+         , SHP_TRK_NUM
+         , SHP_STAT
+         , SHP_DT
+         , SHP_ARRV_DT
+         , REVIEW_WRITTEN
+    FROM (
+        SELECT ROWNUM AS RNUM, A.*
+          FROM (
+               SELECT
+                   ORD.EVNT_RM_ID
+                 , ORD.MBR_ID
+                 , PTCPT.EVNT_RM_PTCPT_RNK  AS EVNT_RM_PTCPT_RNK
+                 , ORD.ORD_ID
+                 , ORD.ORD_CNT
+                 , ORD.PRD_PRC_FINAL
+                 , TO_CHAR(ORD.ORD_DT, 'YYYY-MM-DD') AS ORD_DT
+                 , ORD.ORD_DVSN
+                 , PCKG.PCKG_ID
+                 , PCKG.PCKG_NM
+                 , PCKG.PCKG_IMG
+                 , TO_CHAR(PMT.PMT_DT, 'YYYY-MM-DD') AS PMT_DT
+                 , PRD.PRD_ID
+                 , PRD.PRD_NM
+                 , PRD.PRD_IMG
+                 , SHP.SHP_CMPNY
+                 , SHP.SHP_TRK_NUM
+                 , SHP.SHP_STAT
+                 , TO_CHAR(SHP.SHP_DT, 'YYYY-MM-DD HH24:MI') AS SHP_DT
+                 , TO_CHAR(SHP.SHP_ARRV_DT, 'YYYY-MM-DD HH24:MI') AS SHP_ARRV_DT
+                 , CASE
+                       WHEN (SELECT COUNT(*) 
+                               FROM PRD_RVW RVW
+                               JOIN ORD_DETL OD ON RVW.PRD_ID = OD.PRD_ID
+                              WHERE OD.ORD_ID = ORD.ORD_ID 
+                                AND RVW.MBR_ID = ORD.MBR_ID
+                            ) > 0
+                       THEN 1
+                       ELSE 0
+                   END AS REVIEW_WRITTEN
+               FROM ORD
+               LEFT JOIN PRD
+                 ON ORD.PRD_ID = PRD.PRD_ID
+               LEFT JOIN PRCHS_PCKG PCKG
+                 ON ORD.PCKG_ID = PCKG.PCKG_ID
+               LEFT JOIN PMT
+                 ON ORD.ORD_ID = PMT.ORD_ID
+               LEFT JOIN SHP
+                 ON ORD.ORD_ID = SHP.ORD_ID
+               LEFT JOIN EVNT_RM_PTCPT PTCPT
+                 ON ORD.EVNT_RM_ID = PTCPT.EVNT_RM_ID
+                AND ORD.MBR_ID       = PTCPT.MBR_ID
+               WHERE ORD.MBR_ID = #{mbrId}
+               ORDER BY PMT.PMT_DT DESC
+              ) A
+          WHERE ROWNUM &lt;= #{endRow}
+             )
+       WHERE RNUM &gt;= #{startRow}
+</select>
+
+    <select id="selectMyOrderListCount"
+            parameterType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageOrderSearchVO"
+            resultType="int">
+        SELECT COUNT(*)
+          FROM ORD
+         WHERE MBR_ID = #{mbrId}
+    </select>
+
+    <select id="getMyOrderDetail"
+            parameterType="int"
+            resultType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageOrderDetailVO">
+        SELECT ORD.EVNT_RM_ID
+             , ORD.MBR_ID
+             , ORD.ORD_ID
+             , ORD.ORD_CNT
+             , ORD.PRD_PRC
+             , ORD.PRD_DSCNT_PRC
+             , ORD.PRD_PRC_FINAL
+             , TO_CHAR(ORD.ORD_DT, 'YYYY-MM-DD') AS ORD_DT
+             , ORD.ORD_DVSN
+             , PCKG.PCKG_ID
+             , PCKG.PCKG_NM
+             , PCKG.PCKG_IMG
+             , PMT.MTD_MTHD
+             , PMT.PMT_STAT
+             , TO_CHAR(PMT.PMT_DT, 'YYYY-MM-DD') AS PMT_DT
+             , PRD.PRD_ID
+             , PRD.PRD_NM
+             , PRD.PRD_IMG
+             , SHP.SHP_NM
+             , SHP.SHP_PH_NO
+             , SHP.SHP_ADDR
+             , SHP.SHP_REQ_CN
+             , SHP.SHP_CMPNY
+             , SHP.SHP_TRK_NUM
+             , SHP.SHP_STAT
+             , TO_CHAR(SHP.SHP_DT, 'YYYY-MM-DD HH24:MI') AS SHP_DT
+             , TO_CHAR(SHP.SHP_ARRV_DT, 'YYYY-MM-DD HH24:MI') AS SHP_ARRV_DT
+          FROM ORD
+          LEFT JOIN PRD
+            ON ORD.PRD_ID = PRD.PRD_ID
+          LEFT JOIN PRCHS_PCKG PCKG
+            ON ORD.PCKG_ID = PCKG.PCKG_ID
+          LEFT JOIN PMT
+            ON ORD.ORD_ID = PMT.ORD_ID
+          LEFT JOIN SHP
+            ON ORD.ORD_ID = SHP.ORD_ID
+         WHERE ORD.ORD_ID = #{ordId}
+    </select>
+
+    <select id="getMyActivityChatList"
+            parameterType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageActivityChatVO"
+            resultType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageActivityChatVO">
+        SELECT RNUM
+             , "eventRmId"
+             , "evntRmPtcptId"
+             , "evntRmPtcptCnt"
+             , "evntRmPtcptRnk"
+             , "evntRmPtcptJnDt"
+             , "mbrId"
+             , "prdId"
+             , "prdNm"
+             , "prdImg"
+          FROM (
+               SELECT ROWNUM AS RNUM
+                    , EVNT_RM_ID AS "eventRmId"
+                    , EVNT_RM_PTCPT_ID AS "evntRmPtcptId"
+                    , EVNT_RM_PTCPT_CNT AS "evntRmPtcptCnt"
+                    , EVNT_RM_PTCPT_RNK AS "evntRmPtcptRnk"
+                    , EVNT_RM_PTCPT_JN_DT AS "evntRmPtcptJnDt"
+                    , MBR_ID AS "mbrId"
+                    , PRD_ID AS "prdId"
+                    , PRD_NM AS "prdNm"
+                    , PRD_IMG AS "prdImg"
+                 FROM (
+                      SELECT EVNT_P.EVNT_RM_ID
+                           , EVNT_P.EVNT_RM_PTCPT_ID
+                           , EVNT_P.EVNT_RM_PTCPT_CNT
+                           , EVNT_P.EVNT_RM_PTCPT_RNK
+                           , TO_CHAR(EVNT_P.EVNT_RM_PTCPT_JN_DT, 'YYYY-MM-DD HH24:MI:SS') AS EVNT_RM_PTCPT_JN_DT
+                           , EVNT_P.MBR_ID
+                           , PRD.PRD_ID
+                           , PRD.PRD_NM
+                           , PRD.PRD_IMG
+                        FROM EVNT_RM_PTCPT EVNT_P
+                        JOIN EVNT_RM RM
+                          ON EVNT_P.EVNT_RM_ID = RM.EVNT_RM_ID
+                        JOIN PRD
+                          ON RM.PRD_ID = PRD.PRD_ID
+                       WHERE EVNT_P.MBR_ID = #{mbrId}
+                       ORDER BY EVNT_P.EVNT_RM_PTCPT_JN_DT DESC
+                      )
+               )
+         WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+    </select>
+
+    <select id="getMyActivityChatListCount"
+            parameterType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageActivityChatVO"
+            resultType="int">
+        SELECT COUNT (*)
+          FROM EVNT_RM_PTCPT EVNT_P
+         WHERE EVNT_P.MBR_ID = #{mbrId}
+    </select>
+
+    <select id="getMyActivityRouletteList"
+            parameterType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageActivityRouletteVO"
+            resultType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageActivityRouletteVO">
+        SELECT RNUM
+             , "mbrId"
+             , "bnftId"
+             , "bnftNm"
+             , "bnftTyp"
+             , "bnftVal"
+             , "spnId"
+             , "spnDt"
+          FROM (
+               SELECT ROWNUM AS RNUM
+                    , MBR_ID AS "mbrId"
+                    , BNFT_ID AS "bnftId"
+                    , BNFT_NM AS "bnftNm"
+                    , BNFT_TYP AS "bnftTyp"
+                    , BNFT_VAL AS "bnftVal"
+                    , SPN_ID AS "spnId"
+                    , SPN_DT AS "spnDt"
+                 FROM (
+                      SELECT SPN.MBR_ID
+                           , SPN.BNFT_ID
+                           , BNFT.BNFT_NM
+                           , BNFT.BNFT_TYP
+                           , BNFT.BNFT_VAL
+                           , SPN.SPN_ID
+                           , TO_CHAR(SPN.SPN_DT, 'YYYY-MM-DD HH24:MI:SS') AS SPN_DT
+                        FROM RLT_SPN SPN
+                        JOIN RLT_BNFT BNFT
+                          ON SPN.BNFT_ID = BNFT.BNFT_ID
+                       WHERE SPN.MBR_ID = #{mbrId}
+                       ORDER BY SPN.SPN_DT DESC
+                      )
+               )
+         WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+    </select>
+
+    <select id="getMyActivityRouletteListCount"
+            parameterType="com.ktdsuniversity.proj.dadada.mypage.vo.MyPageActivityRouletteVO"
+            resultType="int">
+        SELECT COUNT (*)
+          FROM RLT_SPN SPN
+         WHERE SPN.MBR_ID = #{mbrId}
+    </select>
+</mapper>

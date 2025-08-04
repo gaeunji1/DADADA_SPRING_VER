@@ -1,0 +1,57 @@
+logging:
+  level:
+    root: info
+
+app:
+  multipart:
+    base-dir:
+      windows: C:\upload-files    # 서버에 업로드된 파일이 저장되는 경로
+      linux: /var/local/src/upload-files
+      macos: /document/upload-files
+    obfuscation:
+      enable: true # 서버에 업로드된 파일의 이름을 난독화하는 설정
+   #   hide-ext:
+   #    enable: true # 서버에 업로드된 파일의 확장자를 가리는 설정
+
+mybatis:
+  config-location: classpath:mybatis/mybatis-config.xml
+  mapper-locations: classpath:com/ktdsuniversity/proj/dadada/**/mapper/*Mapper.xml
+  type-aliases-package: com.ktdsuniversity.proj.dadada.member.vo
+
+spring:
+    servlet:
+      multipart:
+        enabled: true
+        max-request-size: 50MB
+        max-file-size: 30MB
+
+    mvc:
+      view:
+        prefix: /WEB-INF/views/
+        suffix: .jsp
+    application:
+      name: kt-ds-dadada
+
+    datasource:
+      url: jdbc:oracle:thin:@192.168.211.11:1521:XE
+      driver-class-name: oracle.jdbc.OracleDriver
+      username: TEAM_B
+      password: TEAM_B
+    web:
+      resources:
+        add-mappings: true
+    mail:
+            host: smtp.gmail.com
+            port: 587
+            username: a01056569864@gmail.com
+            password: algt iddw mhwu xirc  # Gmail 앱 비밀번호 
+            properties:
+              mail:
+                smtp:
+                  auth: true
+                  starttls:
+                    enable: true
+
+shipping:
+  base-fee: 2500 # 기본 배송비 2500원
+  free-min-price: 50000 # 5만원 이상 구매 시 무료 배송

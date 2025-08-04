@@ -1,0 +1,41 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+           "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ktdsuniversity.proj.dadada.chat.dao.ParticipantDAO">
+
+  <insert id="insertParticipant"
+          parameterType="com.ktdsuniversity.proj.dadada.chat.vo.ParticipantVO">
+    <selectKey keyProperty="evntRmPtptId"
+               resultType="int"
+               order="BEFORE">
+      SELECT SEQ_EVNT_RM_PTCPT_ID.NEXTVAL FROM DUAL
+    </selectKey>
+	    INSERT INTO EVNT_RM_PTCPT (
+	       EVNT_RM_PTCPT_ID,
+	       MBR_ID,
+	       EVNT_RM_ID,
+	       EVNT_RM_PTCPT_CNT,
+	       EVNT_RM_PTCPT_RNK,
+	       EVNT_RM_PTCPT_JN_DT,
+	       CONFIRM_DT
+	    )
+	    VALUES (
+	       #{evntRmPtptId},
+	       #{mbrId},
+	       #{evntRmId},
+	       #{ptcptCnt},
+	       #{ptcptRnk},
+	       SYSDATE,
+	       SYSDATE
+	    )
+  </insert>
+
+<update id="updateParticipantRank"
+        parameterType="com.ktdsuniversity.proj.dadada.chat.vo.ParticipantRankVO">
+  UPDATE EVNT_RM_PTCPT
+    SET EVNT_RM_PTCPT_RNK = #{rank}
+  WHERE EVNT_RM_ID = #{evntRmId}
+    AND MBR_ID       = #{mbrId}
+</update>
+
+</mapper>

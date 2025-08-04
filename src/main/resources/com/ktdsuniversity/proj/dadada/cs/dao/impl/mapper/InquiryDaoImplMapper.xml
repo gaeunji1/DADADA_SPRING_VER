@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ktdsuniversity.proj.dadada.cs.dao.impl.InquiryDaoImpl">
+
+    <sql id="inquiryColumns">
+        i.INQRY_ID,
+        i.MBR_ID,
+        i.ORD_ID,
+        i.INQRY_TTL,
+        i.INQRY_CNTNT,
+        i.INQRY_CTGRY,
+        i.INQRY_PRVT,
+        i.INQRY_STAT,
+        TO_CHAR(i.INQRY_CRT_DT, 'YYYY-MM-DD HH24:MI:SS') AS INQRY_CRT_DT,
+        TO_CHAR(i.INQRY_UPDT_DT, 'YYYY-MM-DD HH24:MI:SS') AS INQRY_UPDT_DT,
+        i.INQRY_IMG_PATH,
+        i.INQRY_RPLY,
+        TO_CHAR(i.INQRY_RPLY_DT, 'YYYY-MM-DD HH24:MI:SS') AS INQRY_RPLY_DT,
+        m.MBR_NCKNM AS mbrNcknm
+    </sql>
+
+    <sql id="searchCondition">
+        <where>
+            <if test="category != null">
+                i.INQRY_CTGRY = #{category}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="searchType == 'title'">
+                        AND i.INQRY_TTL LIKE '%' || #{keyword} || '%'
+                    </when>
+                    <otherwise>
+                        AND i.INQRY_TTL LIKE '%' || #{keyword} || '%'
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="filterByUserId != null">
+                AND i.MBR_ID = #{filterByUserId}
+            </if>
+            <if test="onlyPublic != null and onlyPublic">
+            </if>
+        </where>
+    </sql>
+
+    <resultMap id="inquiryResultMap" type="com.ktdsuniversity.proj.dadada.cs.vo.InquiryVO">
+        <id column="INQRY_ID" property="inqryId" />
+        <result column="MBR_ID" property="mbrId" />
+        <result column="ORD_ID"   property="ordId"/>
+        <result column="INQRY_TTL" property="inqryTtl" />
+        <result column="INQRY_CNTNT" property="inqryCntnt" />
+        <result column="INQRY_CTGRY" property="inqryCtgry" />
+        <result column="INQRY_PRVT" property="inqryPrvt" />
+        <result column="INQRY_STAT" property="inqryStat" />
+        <result column="INQRY_CRT_DT" property="inqryCrtDt" />
+        <result column="INQRY_UPDT_DT" property="inqryUpdtDt" />
+        <result column="INQRY_IMG_PATH" property="inqryImgPath" />
+        <result column="INQRY_RPLY" property="inqryRply" />
+        <result column="INQRY_RPLY_DT" property="inqryRplyDt" />
+        <result column="mbrNcknm" property="mbrNcknm" />
+    </resultMap>
+
+    <select id="selectInquiryList"
+            parameterType="com.ktdsuniversity.proj.dadada.cs.vo.InquiryPaginationVO"
+            resultMap="inquiryResultMap">
+        SELECT
+            rnum,
+            ORD_ID,
+            INQRY_ID,
+            MBR_ID,
+            INQRY_TTL,
+            INQRY_CNTNT,
+            INQRY_CTGRY,
+            INQRY_PRVT,
+            INQRY_STAT,
+            INQRY_CRT_DT,
+            INQRY_UPDT_DT,
+            INQRY_IMG_PATH,
+            INQRY_RPLY,
+            INQRY_RPLY_DT,
+            mbrNcknm
+        FROM (
+            SELECT 
+                ROWNUM rnum,
+                a.ORD_ID,
+                a.INQRY_ID,
+                a.MBR_ID,
+                a.INQRY_TTL,
+                a.INQRY_CNTNT,
+                a.INQRY_CTGRY,
+                a.INQRY_PRVT,
+                a.INQRY_STAT,
+                a.INQRY_CRT_DT,
+                a.INQRY_UPDT_DT,
+                a.INQRY_IMG_PATH,
+                a.INQRY_RPLY,
+                a.INQRY_RPLY_DT,
+                a.mbrNcknm
+           FROM (
+            SELECT
+                <include refid="inquiryColumns"/>
+            FROM INQRY i
+            LEFT JOIN MBR m ON i.MBR_ID = m.MBR_ID
+            <include refid="searchCondition"/>
+            ORDER BY i.INQRY_CRT_DT
+                <choose>
+                    <when test="sort == 'oldest'">ASC</when>
+                    <otherwise>DESC</otherwise>
+                </choose>
+        ) a
+        WHERE ROWNUM &lt;= #{endRow}
+    ) 
+    WHERE rnum &gt;= #{startRow}
+</select>
+
+    <select id="selectInquiryCount"
+            parameterType="com.ktdsuniversity.proj.dadada.cs.vo.InquiryPaginationVO"
+            resultType="int">
+        SELECT COUNT(i.INQRY_ID)
+        FROM INQRY i
+        LEFT JOIN MBR m ON i.MBR_ID = m.MBR_ID
+        <include refid="searchCondition"/>
+    </select>
+
+    <select id="selectOneInquiry"
+            parameterType="int"
+            resultMap="inquiryResultMap">
+        SELECT
+            <include refid="inquiryColumns"/>
+        FROM INQRY i
+        LEFT JOIN MBR m ON i.MBR_ID = m.MBR_ID
+        WHERE i.INQRY_ID = #{inquiryId}
+    </select>
+
+    <insert id="insertNewInquiry"
+            parameterType="com.ktdsuniversity.proj.dadada.cs.vo.InquiryWriteRequestVO">
+        <selectKey keyProperty="inqryId" resultType="int" order="BEFORE">
+            SELECT INQUIRY_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO INQRY (
+            INQRY_ID,
+            MBR_ID,
+            ORD_ID,
+            INQRY_TTL,
+            INQRY_CNTNT,
+            INQRY_CTGRY,
+            INQRY_PRVT,
+            INQRY_IMG_PATH,
+            INQRY_RPLY,
+            INQRY_RPLY_DT
+        ) VALUES (
+            #{inqryId},
+            #{mbrId},
+            #{ordId},
+            #{inqryTtl},
+            #{inqryCntnt},
+            #{inqryCtgry},
+            #{inqryPrvt},
+            #{inqryImgPath},
+            NULL,
+            NULL
+        )
+    </insert>
+
+    <update id="updateInquiryReply"
+            parameterType="com.ktdsuniversity.proj.dadada.cs.vo.InquiryUpdateRequestVO">
+        UPDATE INQRY
+        SET INQRY_RPLY = #{inqryRply},
+            INQRY_RPLY_DT = SYSDATE,
+            INQRY_STAT = 2
+        WHERE INQRY_ID = #{inqryId}
+    </update>
+
+    <update id="updateInquiryStatus"
+            parameterType="map">
+        UPDATE INQRY
+        SET INQRY_STAT = #{status}
+        WHERE INQRY_ID = #{inquiryId}
+    </update>
+
+    <update id="updateOneInquiry"
+            parameterType="com.ktdsuniversity.proj.dadada.cs.vo.InquiryUpdateRequestVO">
+        UPDATE INQRY
+        SET INQRY_TTL = #{inqryTtl},
+            INQRY_CNTNT = #{inqryCntnt},
+            INQRY_CTGRY = #{inqryCtgry},
+            INQRY_PRVT = #{inqryPrvt},
+            INQRY_IMG_PATH = #{inqryImgPath},
+            INQRY_UPDT_DT = SYSDATE
+        WHERE INQRY_ID = #{inqryId}
+    </update>
+
+    <delete id="deleteOneInquiry"
+            parameterType="int">
+        DELETE FROM INQRY
+        WHERE INQRY_ID = #{inquiryId}
+    </delete>
+</mapper>

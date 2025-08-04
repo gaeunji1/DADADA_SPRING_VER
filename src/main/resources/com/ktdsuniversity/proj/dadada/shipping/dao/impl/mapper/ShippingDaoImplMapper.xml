@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ktdsuniversity.proj.dadada.shipping.dao.ShippingDaoImpl">
+
+<insert id="insertShipping" parameterType="com.ktdsuniversity.proj.dadada.shipping.vo.ShippingVO">
+  <selectKey keyProperty="shpId" resultType="int" order="BEFORE">
+    SELECT SEQ_SHP_ID.NEXTVAL FROM DUAL
+  </selectKey>
+  INSERT INTO SHP (SHP_ID
+  				  ,ORD_ID
+  				  ,SHP_NM
+  				  ,SHP_PH_NO
+  				  ,SHP_ADDR
+  				  ,SHP_REQ_CN
+  				  ,SHP_STAT
+  				  ,SHP_DT) 
+  	   VALUES (#{shpId}
+  	   		  ,#{ordId}
+  	   		  ,#{shpNm}
+  	   		  ,#{shpPhNo}
+  	   		  ,#{shpAddr}
+  	   		  ,#{shpReqCn}
+  	   		  ,'결제 완료'
+  	   		  ,NULL)
+</insert>
+
+<update id="updateShippingStatus" parameterType="com.ktdsuniversity.proj.dadada.shipping.vo.ShippingVO">
+  UPDATE SHP
+    SET SHP_STAT = #{shpStat}
+  WHERE ORD_ID   = #{ordId}
+</update>
+
+</mapper>

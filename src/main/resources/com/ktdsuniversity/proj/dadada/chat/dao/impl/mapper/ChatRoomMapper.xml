@@ -1,0 +1,57 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+           "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ktdsuniversity.proj.dadada.chat.mapper.ChatRoomMapper">
+
+  <!-- (1) 방 생성 -->
+<insert id="insertRoom"
+        parameterType="com.ktdsuniversity.proj.dadada.chat.vo.ChatRoomVO">
+  <selectKey keyProperty="evntRmId"
+             resultType="int"
+             order="BEFORE">
+    SELECT SEQ_EVNT_RM_ID.NEXTVAL FROM DUAL
+  </selectKey>
+
+  INSERT INTO EVNT_RM (
+    EVNT_RM_ID,
+    PRD_ID,
+    EVNT_RM_STAT,
+    EVNT_RM_MX,
+    EVNT_RM_DT,
+    EVNT_RM_ENDT
+  )
+  VALUES (
+    #{evntRmId},
+    #{prdId},
+    #{evntRmStat},
+    #{evntRmMx},
+    TO_DATE(SUBSTR(#{evntRmDt}, 1, 10), 'YYYY-MM-DD'),
+    TO_DATE(SUBSTR(#{evntRmEndt}, 1, 10), 'YYYY-MM-DD')
+  )
+</insert>
+
+	  <!-- (2) “입장”만 처리하는 단순 참가자 저장 (맵 기반) -->
+	<insert id="insertParticipant" parameterType="map">
+	  <selectKey keyProperty="ptId"
+	             resultType="int"
+	             order="BEFORE">
+	    SELECT SEQ_EVNT_RM_PTCPT_ID.NEXTVAL FROM DUAL
+	  </selectKey>
+	  INSERT INTO EVNT_RM_PTCPT (
+	     EVNT_RM_PTCPT_ID,
+	     MBR_ID,
+	     EVNT_RM_ID,
+	     EVNT_RM_PTCPT_JN_DT,
+	     CONFIRM_DT
+	  )
+	  VALUES (
+	     #{ptId},
+	     #{userId},
+	     #{roomId},
+	     SYSDATE,
+	     SYSDATE
+	  )
+	</insert>
+
+
+</mapper>

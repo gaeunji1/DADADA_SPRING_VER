@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ktdsuniversity.proj.dadada.cart.dao.CartDAO">
+
+    <!-- 장바구니 ID 조회 (없으면 0 리턴) -->
+    <select id="findCartIdByMbrId" parameterType="int" resultType="int">
+        SELECT NVL(MAX(CART_ID), 0)
+        FROM CART
+        WHERE MBR_ID = #{mbrId}
+    </select>
+
+    <!-- 장바구니 생성 -->
+    <insert id="createCart" parameterType="int">
+        INSERT INTO CART (CART_ID, MBR_ID, CRTDAT)
+        VALUES (SEQ_CART_ID.NEXTVAL, #{mbrId}, SYSDATE)
+    </insert>
+
+    <!-- 장바구니에 해당 상품이 있는지 확인 -->
+    <select id="countCartProduct" parameterType="com.ktdsuniversity.proj.dadada.cart.vo.CartVO" resultType="int">
+        SELECT COUNT(*)
+        FROM CART_PRD
+        WHERE CART_ID = #{cartId}
+          AND PRD_ID  = #{prdId}
+    </select>
+
+    <!-- 장바구니에 상품 추가 -->
+    <insert id="insertCartProduct" parameterType="com.ktdsuniversity.proj.dadada.cart.vo.CartVO">
+        INSERT INTO CART_PRD (CART_ID, PRD_ID, QTY, ADD_DT)
+        VALUES (#{cartId}, #{prdId}, #{qty}, SYSDATE)
+    </insert>
+
+    <!-- 장바구니 상품 수량 증가 (덧셈) -->
+    <update id="updateCartProductQty" parameterType="com.ktdsuniversity.proj.dadada.cart.vo.CartVO">
+        UPDATE CART_PRD
+        SET QTY = QTY + #{qty}
+        WHERE CART_ID = #{cartId}
+          AND PRD_ID  = #{prdId}
+    </update>
+
+    <!-- 장바구니 상품 수량 설정 (절대값) -->
+    <update id="setCartProductQty" parameterType="com.ktdsuniversity.proj.dadada.cart.vo.CartVO">
+        UPDATE CART_PRD
+        SET QTY = #{qty}
+        WHERE CART_ID = #{cartId}
+          AND PRD_ID  = #{prdId}
+    </update>
+    
+    <!-- 장바구니 상품 조회 -->
+    <select id="selectCartProductsByCartId" parameterType="int" resultType="com.ktdsuniversity.proj.dadada.cart.vo.CartVO">
+        SELECT 
+          CP.CART_ID, 
+          CP.PRD_ID, 
+          CP.QTY, 
+          P.PRD_NM, 
+          P.PRD_IMG, 
+          P.BASE_PRICE, 
+          P.PRD_DSCNT_PRC,
+          (P.BASE_PRICE - P.PRD_DSCNT_PRC) AS FINAL_PRICE
+        FROM CART_PRD CP
+        JOIN PRD P ON CP.PRD_ID = P.PRD_ID
+        WHERE CP.CART_ID = #{cartId}
+    </select>
+
+    <!-- 장바구니 상품 삭제 -->
+    <delete id="deleteCartProduct" parameterType="com.ktdsuniversity.proj.dadada.cart.vo.CartVO">
+        DELETE FROM CART_PRD
+        WHERE CART_ID = #{cartId}
+          AND PRD_ID = #{prdId}
+    </delete>
+    
+    <delete id="deleteAllCartProducts" parameterType="int">
+	  DELETE FROM CART_PRD WHERE CART_ID = #{cartId}
+	</delete>
+
+</mapper>

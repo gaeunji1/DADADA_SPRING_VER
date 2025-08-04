@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ktdsuniversity.proj.dadada.order.dao.impl.OrderDaoImpl">
+
+<insert id="insertOrder"
+          parameterType="com.ktdsuniversity.proj.dadada.order.vo.OrderVO">
+    <selectKey keyProperty="ordId" resultType="int" order="BEFORE">
+      SELECT ORD_SEQ.NEXTVAL FROM DUAL
+    </selectKey>
+    INSERT INTO ORD
+      (ORD_ID,
+       MBR_ID,
+       PRD_ID,
+       PCKG_ID,
+       EVNT_RM_ID,
+       ORD_CNT,
+       PRD_PRC,
+       DSCNT_RT,
+       PRD_DSCNT_PRC,
+       PRD_PRC_FINAL,
+       ORD_DT,
+       ORD_DVSN,
+       DLV_STAT,
+       CRT_PCKG_YN)
+    VALUES
+      (#{ordId},
+       #{mbrId},
+       #{prdId},
+       #{pckgId},
+       #{evntRmId},
+       #{ordCnt},
+       #{prdPrc},
+       #{dscntRt},
+       #{prdDscntPrc},
+       #{prdPrcFinal},
+       SYSDATE,
+       #{ordDvsn},
+       #{dlvStat},
+       #{crtPckgYn})
+  </insert>
+  
+<insert id="insertOrderDetail"
+        parameterType="com.ktdsuniversity.proj.dadada.order.vo.OrderDetailVO">
+  <selectKey keyProperty="ordDetlId" resultType="int" order="BEFORE">
+    SELECT SEQ_ORD_DETL_ID.NEXTVAL FROM DUAL
+  </selectKey>
+  INSERT INTO ORD_DETL
+    (ORD_DETL_ID,
+     ORD_ID,
+     PRD_ID,
+     ORD_DETL_PRD_CNT,
+     ORD_DETL_PRD_PRC,
+     ORD_DETL_DSCNT_RT,
+     ORD_DETL_PRD_DSCNT_PRC,
+     ORD_DETL_PRD_PRC_FINAL)
+  VALUES
+    (#{ordDetlId},
+     #{ordId},
+     #{prdId},
+     #{prdQty},
+     #{prdPrc},
+     #{dscntRt},
+     #{prdDscntPrc},
+     #{prdPrcFinal})   
+</insert>
+
+</mapper>
